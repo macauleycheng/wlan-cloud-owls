@@ -10,8 +10,15 @@
 #include "SimulationCoordinator.h"
 #include "SimStats.h"
 #include "OWLSclientEvents.h"
+#include <openssl/x509_vfy.h>
+#include <openssl/ssl.h>
 
 namespace OpenWifi::OWLSClientEvents {
+
+    int sslCallack(int preverify_ok, X509_STORE_CTX *x509_ctx) {
+        std::cout << "macauley callback   " << preverify_ok << std::endl;;
+        return 1;
+    }
 
     void EstablishConnection( const std::shared_ptr<OWLSclient> &Client, SimulationRunner *Runner) {
         if(!Runner->Running()) {
@@ -56,6 +63,8 @@ namespace OpenWifi::OWLSClientEvents {
 
         if (SimulationCoordinator()->GetLevel() == Poco::Net::Context::VERIFY_STRICT) {
         }
+
+        SSL_CTX_set_verify(SSLCtx, SSL_VERIFY_PEER, sslCallack);
 
         Poco::Net::HTTPSClientSession Session(uri.getHost(), uri.getPort(), Context);
         Poco::Net::HTTPRequest Request(Poco::Net::HTTPRequest::HTTP_GET, "/?encoding=text",
