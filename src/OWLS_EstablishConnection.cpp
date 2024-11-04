@@ -17,6 +17,18 @@ namespace OpenWifi::OWLSClientEvents {
 
     int sslCallack(int preverify_ok, X509_STORE_CTX *x509_ctx) {
         std::cout << "macauley callback   " << preverify_ok << std::endl;;
+
+        X509 *currentCert = X509_STORE_CTX_get_current_cert(x509_ctx);
+        char buf[256];
+        X509_NAME_oneline(X509_get_subject_name(currentCert), buf, 256);
+        std::cout << "verfy " << buf << std::endl;
+
+        if (!preverify_ok) {
+            int certError = X509_STORE_CTX_get_error(x509_ctx);
+            int depth = X509_STORE_CTX_get_error_depth(x509_ctx);
+            std::cout << "Error depth  " << depth << ", cert error  "<< X509_verify_cert_error_string(certError) << std::endl;
+
+        }
         return 1;
     }
 
@@ -43,6 +55,9 @@ namespace OpenWifi::OWLSClientEvents {
         auto Context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, P);
         Poco::Crypto::X509Certificate Cert(SimulationCoordinator()->GetCertFileName());
         Poco::Crypto::X509Certificate Root(SimulationCoordinator()->GetRootCAFileName());
+
+        Client->Logger_.information(fmt::format("Cert={} : Root={}",
+                                        SimulationCoordinator()->GetCertFileName(), SimulationCoordinator()->GetRootCAFileName()));
 
         Context->useCertificate(Cert);
         Context->addChainCertificate(Root);
